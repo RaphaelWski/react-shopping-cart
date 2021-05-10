@@ -78,6 +78,32 @@ export default class App extends Component<Props, State> {
     }
   }
 
+  handleAddToCart = (item: Product) => {
+    let { cart } = this.state
+    let cartProduct : CartProduct;
+
+    const product = cart.products.find(product => product.productId === item.id)
+    if(product && product.quantity) {
+      cartProduct = { productId: item.id, quantity: product.quantity+1 }
+      cart = {
+        ...cart, 
+        products: [
+          cartProduct,
+          ...cart.products.filter(product => product.productId !== item.id) // Attention à l'ordre
+        ]
+      } 
+    } else {
+      cartProduct = { productId: item.id, quantity: 1 }
+      cart.products.push(cartProduct);
+    }
+      
+    this.setState({ cart })
+  }
+
+  calcul = () => {
+    // data.products.find(pdt => pdt.id == product.productId)?.price
+  }
+
   render() {
     const { data, cart } = this.state
     return (
@@ -95,8 +121,11 @@ export default class App extends Component<Props, State> {
                   )
                   const shortcutActions = [
                     {
-                      content: 'Add to basket (+1)',
-                      onAction: () => alert('Add to basket'),
+                      content: `Add ${item.name} to basket (+1)`,
+                      onAction: () => {
+                        this.handleAddToCart(item);
+                        // alert(`${item.name} added to basket`)
+                      }
                     },
                   ]
                   return (
@@ -107,7 +136,7 @@ export default class App extends Component<Props, State> {
                       accessibilityLabel={`View details for ${name}`}
                       shortcutActions={shortcutActions}
                       persistActions={true}
-                      onClick={console.log}
+                      onClick={ () => console.log(item) }
                     >
                       <h3>
                         <TextStyle variation="strong">{name}</TextStyle>
