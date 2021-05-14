@@ -86,15 +86,22 @@ export default class App extends Component<Props, State> {
     if(product && product.quantity) {
       cartProduct = { productId: item.id, quantity: product.quantity+1 }
       cart = {
-        ...cart, 
+        ...cart,
         products: [
-          cartProduct,
-          ...cart.products.filter(product => product.productId !== item.id) // Attention à l'ordre
+          ...cart.products.filter(product => product.productId !== item.id), // Attention à l'ordre
+          cartProduct
         ]
       } 
     } else {
       cartProduct = { productId: item.id, quantity: 1 }
       cart.products.push(cartProduct);
+      // cart = {
+      //   ...cart,
+      //   products : [
+      //     ...cart.products,
+      //     cartProduct
+      //   ]
+      // }
     }
       
     this.setState({ cart })
@@ -156,9 +163,12 @@ export default class App extends Component<Props, State> {
             >
               <Card.Section title="Items">
                 <List>
-                  {cart.products.map(product => (
-                    <List.Item>{product.quantity} × xxx</List.Item>
-                  ))}
+                  {cart.products.map(productCart => {
+                    const product = data.products.find(product => product.id === productCart.productId)
+                    if(product && product.price) {
+                      return <List.Item>{productCart.quantity} × {product.price}€</List.Item>
+                    }
+                  })}
                 </List>
               </Card.Section>
               <Card.Section title="Totals">
