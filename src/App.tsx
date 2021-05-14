@@ -7,6 +7,7 @@ import {
   List,
   Avatar,
   TextStyle,
+  Button,
 } from '@shopify/polaris'
 
 type Props = {}
@@ -78,37 +79,124 @@ export default class App extends Component<Props, State> {
     }
   }
 
-  handleAddToCart = (item: Product) => {
+  addToCart = (item: Product) => {
     let { cart } = this.state
     let cartProduct : CartProduct;
 
     const product = cart.products.find(product => product.productId === item.id)
     if(product && product.quantity) {
       cartProduct = { productId: item.id, quantity: product.quantity+1 }
+      this.updateCartPrice(item);
+
       cart = {
         ...cart,
         products: [
           ...cart.products.filter(product => product.productId !== item.id), // Attention à l'ordre
           cartProduct
         ]
-      } 
+      }
     } else {
       cartProduct = { productId: item.id, quantity: 1 }
-      cart.products.push(cartProduct);
-      // cart = {
-      //   ...cart,
-      //   products : [
-      //     ...cart.products,
-      //     cartProduct
-      //   ]
-      // }
+      this.updateCartPrice(item);
+
+      cart = {
+        ...cart,
+        products: [
+          ...cart.products,
+          cartProduct
+        ]
+      }
     }
-      
+    
     this.setState({ cart })
   }
 
-  calcul = () => {
-    // data.products.find(pdt => pdt.id == product.productId)?.price
+  updateCartPrice = (product: Product) => {
+    let { cart }= this.state;
+
+    // [Montant HT] = [Montant TTC] / (1 + ([Taux TVA] / 100))
+    let valueHT = product.price / (1 + (product.tax / 100));
+    let value = product.price - valueHT;
+    let tax = { name: product.tax, value: this.formatNumber(value) };
+
+    console.log(tax);
+
+    let totalAmountIncludingTaxes = this.updateTotalAmount();
+    console.log(totalAmountIncludingTaxes);
+
+    cart = {
+      ...cart,
+      taxes: [
+        ...cart.taxes,
+        tax
+      ],
+      totalAmountIncludingTaxes: totalAmountIncludingTaxes
+    }
+
+    this.setState({ cart })
+  }
+
+  formatNumber(number: Number) {
+    return parseFloat(Number.parseFloat(number.toString()).toFixed(2));
+  }
+
+  updateTotalAmount() {
+    let { data, cart } = this.state;
+    let total: number = 0;
+
+    cart.products.map( productCart => {
+      const productData = data.products.find(product => product.id === productCart.productId)
+        if(productData && productData.price) {
+          total += productCart.quantity * productData.price
+        }
+    });
+    return total
+  }
+
+  removeFromCart = (item: Product) => {
+    let { cart } = this.state
+    let cartProduct : CartProduct;
+
+    const product = cart.products.find(product => product.productId === item.id)
+    if(product && product.quantity) {
+      if(product.quantity == 1) {
+        cart = {
+          ...cart,
+          products: [
+            ...cart.products.filter(product => product.productId !== item.id),  // Attention à l'ordre
+          ]
+        }
+      } else {
+          cartProduct = { productId: item.id, quantity: product.quantity-1 }
+          this.updateCartPrice(item);
+    
+          cart = {
+            ...cart,
+            products: [
+              ...cart.products.filter(product => product.productId !== item.id), // Attention à l'ordre
+              cartProduct
+            ]
+          }
+        }
+      }    
+    this.setState({ cart })
+  }
+  
+  cancelCart = () => {
+    let { cart } = this.state;
+
+    cart = {
+      ...cart,
+      products: [],
+      taxes: [],
+      totalAmountIncludingTaxes: 0
+    }
+
+    this.setState({ cart });
+  }
+
+  handleChange = () => {
+    this.setState(this.state);
   }
 
   render() {
@@ -128,10 +216,9 @@ export default class App extends Component<Props, State> {
                   )
                   const shortcutActions = [
                     {
-                      content: `Add ${item.name} to basket (+1)`,
+                      content: `Add ${item.name}`,
                       onAction: () => {
-                        this.handleAddToCart(item);
-                        // alert(`${item.name} added to basket`)
+                        this.addToCart(item);
                       }
                     },
                   ]
@@ -143,7 +230,10 @@ export default class App extends Component<Props, State> {
                       accessibilityLabel={`View details for ${name}`}
                       shortcutActions={shortcutActions}
                       persistActions={true}
-                      onClick={ () => console.log(item) }
+                      onClick={ () => {
+                        console.log(item)
+                        this.handleChange
+                      }}
                     >
                       <h3>
                         <TextStyle variation="strong">{name}</TextStyle>
@@ -158,15 +248,15 @@ export default class App extends Component<Props, State> {
           <Layout.Section secondary>
             <Card
               title="Basket"
-              secondaryFooterAction={{ content: 'Cancel cart' }}
-              primaryFooterAction={{ content: 'Pay' }}
+              secondaryFooterAction={{ content: 'Cancel cart', onAction: () => { this.cancelCart();}, }}
+              primaryFooterAction={{ content: 'Pay', }}
             >
               <Card.Section title="Items">
                 <List>
                   {cart.products.map(productCart => {
                     const product = data.products.find(product => product.id === productCart.productId)
                     if(product && product.price) {
-                      return <List.Item>{productCart.quantity} × {product.price}€</List.Item>
+                      return <List.Item>{product.name} : {productCart.quantity} × {product.price}€ <Button plain destructive onClick={ () => {this.removeFromCart(product);}} >Remove</Button> </List.Item>
                     }
                   })}
                 </List>
