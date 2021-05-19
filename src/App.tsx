@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React, { Component, useEffect, useState } from 'react'
 import {
   Page,
   Layout,
@@ -9,6 +9,7 @@ import {
   TextStyle,
   Button,
 } from '@shopify/polaris'
+import Coucou from './Coucou'
 
 type Props = {}
 
@@ -265,7 +266,12 @@ export default class App extends Component<Props, State> {
   }
 
   handleChange = () => {
-    this.setState(this.state);
+    const [count, setCount]= useState(0);
+
+    useEffect(() => {
+      document.title = `Vous avez cliqué ${count} fois`;
+    });
+    //  this.setState(this.state);
   }
 
   renderItem = (item: Product) => {
@@ -340,6 +346,7 @@ export default class App extends Component<Props, State> {
               primaryFooterAction={checkoutCartAction}
             >
               <Card.Section title="Items">
+                <Coucou></Coucou>
                 <List>
                   {cart.products.map(productCart => {
                     const product = data.products.find(product => product.id === productCart.productId)
@@ -351,14 +358,27 @@ export default class App extends Component<Props, State> {
               </Card.Section>
               <Card.Section title="Totals">
                 <List>
-                  {cart.taxes.map(tax => {
-                      let sumTwenty, sumTen, sumFive, sumTwo, sumNineteen, sumSeven;
-                      if(tax.name == TaxRate.Twenty) sumTwenty = cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
-                      if(tax.name == TaxRate.Ten) sumTen = cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
-                      if(tax.name == TaxRate.Five) sumFive = cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
-                      if(tax.name == TaxRate.Two) sumTwo = cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
-                      if(tax.name == TaxRate.Nineteen) sumNineteen =cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
-                      if(tax.name == TaxRate.Seven) sumSeven = cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
+                  {Object.values(cart.taxes.reduce((prev: {[key: number]: [number, number]}, tax) => {
+                      // let sumTwenty = 0
+                      // let sumTen = 0;
+                      // let sumFive  = 0;
+                      // let sumTwo  = 0;
+                      // let sumNineteen  = 0;
+                      // let sumSeven = 0;
+
+                      // if(tax.name == TaxRate.Twenty) sumTwenty += this.formatNumber(tax.value)
+                      if(prev.hasOwnProperty(tax.name)) {
+                        prev[tax.name] = [tax.name, prev[tax.name][1] + this.formatNumber(tax.value)]
+                      } else {
+                        prev[tax.name] = [tax.name, this.formatNumber(tax.value)]
+                      }
+
+                      // if(tax.name == TaxRate.Twenty) sumTwenty += cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
+                      // if(tax.name == TaxRate.Ten) sumTen = cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
+                      // if(tax.name == TaxRate.Five) sumFive = cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
+                      // if(tax.name == TaxRate.Two) sumTwo = cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
+                      // if(tax.name == TaxRate.Nineteen) sumNineteen =cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
+                      // if(tax.name == TaxRate.Seven) sumSeven = cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
 
                       // if(sumTwenty) return <List.Item>TVA {TaxRate.Twenty}% : {this.formatNumber(sumTwenty)}€</List.Item>
                       // if(sumTen) return <List.Item>TVA {TaxRate.Ten}% : {this.formatNumber(sumTen)}€</List.Item>
@@ -367,9 +387,10 @@ export default class App extends Component<Props, State> {
                       // if(sumNineteen) return <List.Item>TVA {TaxRate.Nineteen}% : {this.formatNumber(sumNineteen)}€</List.Item>
                       // if(sumSeven) return <List.Item>TVA {TaxRate.Seven}% : {this.formatNumber(sumSeven)}€</List.Item>
 
+                      return prev;
                       /** TODO: Utilisation des props pour update le composant */
-                    })
-                  }
+                    }, {} as {[key: number]: [number, number]})).map(([taxName, taxValue]: [number, number]) => <List.Item key={taxName}>TVA {taxName}% : {this.formatNumber(taxValue)}€</List.Item>)
+                    }
                   <List.Item>
                     {this.formatNumber(cart.totalAmountIncludingTaxes)}€ TTC
                   </List.Item>
