@@ -39,16 +39,6 @@ type State = {
     totalAmountIncludingTaxes: number,
   },
 }
-
-enum TaxRate {
-  Twenty = 20,
-  Ten = 10,
-  Five = 5.5,
-  Two = 2.1,
-  Nineteen = 19.6,
-  Seven = 7
-}
-
 export default class App extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
@@ -67,6 +57,13 @@ export default class App extends Component<Props, State> {
             name: 'Product B',
             description: 'Lorem ipsum dolor sit, amet consectetur',
             price: 13,
+            tax: 5.5,
+          },
+          {
+            id: 2,
+            name: 'Product C',
+            description: 'Lorem ipsum dolor sit, amet consectetur',
+            price: 10,
             tax: 5.5,
           },
         ],
@@ -89,66 +86,54 @@ export default class App extends Component<Props, State> {
     }
   }
 
-  updateCartPrice = (product: Product) => {
-    let { cart }= this.state;
-
-    // [Montant HT] = [Montant TTC] / (1 + ([Taux TVA] / 100))
-    let valueHT = product.price / (1 + (product.tax / 100));
+  updateCartPrice = (product: Product, qty: number) => {
+    let { cart } = this.state
+    let valueHT = product.price / (1 + (product.tax / 100)); // [Montant HT] = [Montant TTC] / (1 + ([Taux TVA] / 100))
     let value = product.price - valueHT;
-    let tax = { name: product.tax, value: this.formatNumber(value) };
-
-    console.log(tax);
-
-    let totalAmountIncludingTaxes = this.updateTotalAmount();
-    console.log(totalAmountIncludingTaxes);
-
-    cart = {
-      ...cart,
-      taxes: [
-        ...cart.taxes,
-        tax
-      ],
-      totalAmountIncludingTaxes: totalAmountIncludingTaxes
+    let tax: {name: number, value: number};
+    
+    const taxValue = cart.taxes.find(tax => tax.name == product.tax);
+    // si taxValue et qty > 0 on ajoute un produit au panier donc on update
+    // sinon si taxValue qty < 0 on verifie si on enleve le produit au panier (tax vide {})
+    if(taxValue) {
+      tax = { name: product.tax, value: taxValue.value + (qty * this.formatNumber(value)) };
+    } else {
+      // S'il reste une taxe du meme type mais que le calcul est <= 0, on enleve la tax
+      // if((qty * this.formatNumber(value)) <= 0) {
+      //   tax = {}
+      // } else {
+        tax = { name: product.tax, value: (qty * this.formatNumber(value)) };
+      // }
     }
-
-    this.setState({ cart })
+    
+    return tax;
   }
 
   formatNumber(number: Number) {
     return parseFloat(Number.parseFloat(number.toString()).toFixed(2));
   }
 
-  updateTotalAmount() {
-    let { data, cart } = this.state;
-    let total: number = 0;
+  updateTotalAmount(item: Product, qty: number) {
+    let { cart } = this.state;
 
-    cart.products.map( productCart => {
-      const productData = data.products.find(product => product.id === productCart.productId)
-        if(productData && productData.price) {
-          total += productCart.quantity * productData.price
-        }
-    });
+    let total = cart.totalAmountIncludingTaxes + (qty * item.price);
+
     return total
   }
 
-  addToCart = (item: Product) => {
+  addToCart = (item: Product, qty: number) => {
     let { cart } = this.state
     let cartProduct : CartProduct;
 
     const product = cart.products.find(product => product.productId === item.id)
-    if(product && product.quantity) {
-      cartProduct = { productId: item.id, quantity: product.quantity+1 }
-      // this.updateCartPrice(item); /** ne mets pas à jour le state */
 
-      /** START */
-      // [Montant HT] = [Montant TTC] / (1 + ([Taux TVA] / 100))
-      let valueHT = item.price / (1 + (item.tax / 100));
-      let value = item.price - valueHT;
-      let tax = { name: item.tax, value: this.formatNumber(value) };
-      console.log(tax);
-      let totalAmountIncludingTaxes = this.updateTotalAmount();
-      console.log(totalAmountIncludingTaxes);
-      /** END */
+    if(product && product.quantity) {
+      cartProduct = { productId: item.id, quantity: product.quantity + qty }
+
+      // si la taxe est deja existante, on additionne
+      // sinon on la créee
+      let tax = this.updateCartPrice(item, qty);
+      let totalAmountIncludingTaxes = this.updateTotalAmount(item, qty);
 
       cart = {
         // ...cart,
@@ -157,24 +142,16 @@ export default class App extends Component<Props, State> {
           cartProduct
         ],
         taxes: [
-          ...cart.taxes,
+          ...cart.taxes.filter(tax => tax.name !== item.tax),
           tax
         ],
         totalAmountIncludingTaxes: totalAmountIncludingTaxes
       }
     } else {
       cartProduct = { productId: item.id, quantity: 1 }
-      // this.updateCartPrice(item); /** ne mets pas à jour le state */
 
-      /** START */
-      // [Montant HT] = [Montant TTC] / (1 + ([Taux TVA] / 100))
-      let valueHT = item.price / (1 + (item.tax / 100));
-      let value = item.price - valueHT;
-      let tax = { name: item.tax, value: this.formatNumber(value) };
-      console.log(tax);
-      let totalAmountIncludingTaxes = this.updateTotalAmount();
-      console.log(totalAmountIncludingTaxes);
-      /** END */
+      let tax = this.updateCartPrice(item, qty);
+      let totalAmountIncludingTaxes = this.updateTotalAmount(item, qty);
 
       cart = {
         // ...cart,
@@ -189,62 +166,70 @@ export default class App extends Component<Props, State> {
         totalAmountIncludingTaxes: totalAmountIncludingTaxes
       }
     }
+    // console.log(cart);
     
     this.setState({ cart })
   }
 
-  removeFromCart = (item: Product) => {
+  removeFromCart = (item: Product, qty: number) => {
     let { cart } = this.state
     let cartProduct : CartProduct;
 
     const product = cart.products.find(product => product.productId === item.id)
+
     if(product && product.quantity) {
       if(product.quantity == 1) {
-        /** START */
-        // [Montant HT] = [Montant TTC] / (1 + ([Taux TVA] / 100))
-        let valueHT = item.price / (1 + (item.tax / 100));
-        let value = item.price - valueHT;
-        let tax = { name: item.tax, value: this.formatNumber(value) };
-        console.log(tax);
-        // let totalAmountIncludingTaxes = this.updateTotalAmount();
-        let totalAmountIncludingTaxes: number = 0;
-          /** START */
-          let { data } = this.state;
-          cart.products.map( productCart => {
-            const productData = data.products.find(product => product.id === productCart.productId)
-            if(productData && productData.price) {
-              totalAmountIncludingTaxes += productCart.quantity * productData.price
-            }
-          });
-          /** END */
-        console.log(totalAmountIncludingTaxes);
-        console.log(typeof cart);
-        /** END */
+        // vérifier s'il y a deja ce type de tax
+        // if() {
 
-        cart = {
-          products: [
-            ...cart.products.filter(product => product.productId !== item.id)  // Attention à l'ordre
-          ],
-          taxes: [
-            ...cart.taxes,
-            tax
-          ],
-          totalAmountIncludingTaxes: totalAmountIncludingTaxes
+        // }
+        let tax = this.updateCartPrice(item, qty); // si c'est le dernier taxName GESTION DeS TAXNAME
+        let totalAmountIncludingTaxes = this.updateTotalAmount(item, qty);
+        // let lastTaxType = cart.taxes.name
+        // si tax <= 0 et que c'est la derniere de son type, on enleve cette tax
+        if(tax.value <= 0) {
+          console.log(`ON EST DANS  tax.value <= 0: ${tax.value}`);
+          cart = {
+            products: [
+              ...cart.products.filter(product => product.productId !== item.id)  // Attention à l'ordre
+            ],
+            taxes: [
+              ...cart.taxes.filter(tax => tax.name !== item.tax)
+            ],
+            totalAmountIncludingTaxes: totalAmountIncludingTaxes
+          }
+        } else {
+          cart = {
+            products: [
+              ...cart.products.filter(product => product.productId !== item.id)  // Attention à l'ordre
+            ],
+            taxes: [
+              ...cart.taxes.filter(tax => tax.name !== item.tax),
+              tax
+            ],
+            totalAmountIncludingTaxes: totalAmountIncludingTaxes
+          }
         }
-
       } else {
         cartProduct = { productId: item.id, quantity: product.quantity-1 }
-        this.updateCartPrice(item);
+        let tax =  this.updateCartPrice(item, qty);
+        let totalAmountIncludingTaxes = this.updateTotalAmount(item, qty);
   
         cart = {
           ...cart,
           products: [
-            ...cart.products.filter(product => product.productId !== item.id), // Attention à l'ordre
+            ...cart.products.filter(product => product.productId !== item.id),  // Attention à l'ordre
             cartProduct
-          ]
+          ],
+          taxes: [
+            ...cart.taxes.filter(tax => tax.name !== item.tax),
+            tax
+          ],
+          totalAmountIncludingTaxes: totalAmountIncludingTaxes
         }
       }
     } 
+    // console.log(cart);
     this.setState({ cart })
   }
   
@@ -281,13 +266,14 @@ export default class App extends Component<Props, State> {
       {
         content: `Add`,
         onAction: () => {
-          this.addToCart(item);
+          this.addToCart(item, 1);
         }
       },
       {
         content: `Remove`,
         onAction: () => {
-          this.removeFromCart(item);
+          this.removeFromCart(item, -1);
+          // gérer le cas ou il n'y a rien dans le panier.
         }
       },
     ]
@@ -300,8 +286,7 @@ export default class App extends Component<Props, State> {
         shortcutActions={shortcutActions}
         persistActions={true}
         onClick={ () => {
-          // Gestion du panier (changement du state et calcul du total)
-          console.log(item)
+          // console.log(item)
           this.handleChange
         }}
       >
@@ -351,45 +336,32 @@ export default class App extends Component<Props, State> {
                   {cart.products.map(productCart => {
                     const product = data.products.find(product => product.id === productCart.productId)
                     if(product && product.price) {
-                      return <List.Item>{product.name} : {productCart.quantity} × {product.price}€ <Button plain destructive onClick={ () => {this.removeFromCart(product);}} >Remove</Button> </List.Item>
+                      return <List.Item key={product.id}>{product.name} : {productCart.quantity} × {product.price}€ <Button plain destructive onClick={ () => {this.removeFromCart(product, -1);}} >Remove</Button> </List.Item>
                     }
                   })}
                 </List>
               </Card.Section>
               <Card.Section title="Totals">
                 <List>
-                  {Object.values(cart.taxes.reduce((prev: {[key: number]: [number, number]}, tax) => {
-                      // let sumTwenty = 0
-                      // let sumTen = 0;
-                      // let sumFive  = 0;
-                      // let sumTwo  = 0;
-                      // let sumNineteen  = 0;
-                      // let sumSeven = 0;
+                  {
+                  // Object.values(cart.taxes.reduce((prev: {[key: number]: [number, number]}, tax) => {
 
-                      // if(tax.name == TaxRate.Twenty) sumTwenty += this.formatNumber(tax.value)
-                      if(prev.hasOwnProperty(tax.name)) {
-                        prev[tax.name] = [tax.name, prev[tax.name][1] + this.formatNumber(tax.value)]
-                      } else {
-                        prev[tax.name] = [tax.name, this.formatNumber(tax.value)]
+                  //     if(prev.hasOwnProperty(tax.name)) {
+                  //       prev[tax.name] = [tax.name, prev[tax.name][1] + this.formatNumber(tax.value)]
+                  //     } else {
+                  //       prev[tax.name] = [tax.name, this.formatNumber(tax.value)]
+                  //     }
+
+                  //     return prev;
+                  //     // /** TODO: Utilisation des props pour update le composant */
+                  //   }, {} as {[key: number]: [number, number]})).map(([taxName, taxValue]: [number, number]) => <List.Item key={taxName}>TVA {taxName}% : {this.formatNumber(taxValue)}€</List.Item>)
+                    
+                    cart.taxes.map(tax => {
+                      if(tax && tax.value) {
+                        return <List.Item key={tax.name}>TVA {tax.name}% : {this.formatNumber(tax.value)}€</List.Item>
                       }
-
-                      // if(tax.name == TaxRate.Twenty) sumTwenty += cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
-                      // if(tax.name == TaxRate.Ten) sumTen = cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
-                      // if(tax.name == TaxRate.Five) sumFive = cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
-                      // if(tax.name == TaxRate.Two) sumTwo = cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
-                      // if(tax.name == TaxRate.Nineteen) sumNineteen =cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
-                      // if(tax.name == TaxRate.Seven) sumSeven = cart.taxes.reduce((total, tax) => this.formatNumber(tax.value) + total,0)
-
-                      // if(sumTwenty) return <List.Item>TVA {TaxRate.Twenty}% : {this.formatNumber(sumTwenty)}€</List.Item>
-                      // if(sumTen) return <List.Item>TVA {TaxRate.Ten}% : {this.formatNumber(sumTen)}€</List.Item>
-                      // if(sumFive) return <List.Item>TVA {TaxRate.Five}% : {this.formatNumber(sumFive)}€</List.Item>
-                      // if(sumTwo) return <List.Item>TVA {TaxRate.Two}% : {this.formatNumber(sumTwo)}€</List.Item>
-                      // if(sumNineteen) return <List.Item>TVA {TaxRate.Nineteen}% : {this.formatNumber(sumNineteen)}€</List.Item>
-                      // if(sumSeven) return <List.Item>TVA {TaxRate.Seven}% : {this.formatNumber(sumSeven)}€</List.Item>
-
-                      return prev;
-                      /** TODO: Utilisation des props pour update le composant */
-                    }, {} as {[key: number]: [number, number]})).map(([taxName, taxValue]: [number, number]) => <List.Item key={taxName}>TVA {taxName}% : {this.formatNumber(taxValue)}€</List.Item>)
+                      console.log(cart.taxes);
+                    })
                     }
                   <List.Item>
                     {this.formatNumber(cart.totalAmountIncludingTaxes)}€ TTC
