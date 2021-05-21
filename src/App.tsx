@@ -9,7 +9,8 @@ import {
   TextStyle,
   Button,
 } from '@shopify/polaris'
-import Coucou from './Coucou'
+import { products } from './utils/data'
+import { localCart } from './utils/localCart'
 
 type Props = {}
 
@@ -17,6 +18,7 @@ type Product = {
   id: number,
   name: string,
   description: string,
+  img_url: string
   price: number,
   tax: number,
 }
@@ -43,54 +45,21 @@ export default class App extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      data: {
-        products: [
-          {
-            id: 0,
-            name: 'Product A',
-            description: 'Lorem ipsum dolor sit, amet consectetur',
-            price: 12,
-            tax: 20,
-          },
-          {
-            id: 1,
-            name: 'Product B',
-            description: 'Lorem ipsum dolor sit, amet consectetur',
-            price: 13,
-            tax: 5.5,
-          },
-          {
-            id: 2,
-            name: 'Product C',
-            description: 'Lorem ipsum dolor sit, amet consectetur',
-            price: 10,
-            tax: 5.5,
-          },
-          {
-            id: 3,
-            name: 'Product D',
-            description: 'Lorem ipsum dolor sit, amet consectetur',
-            price: 12,
-            tax: 10,
-          },
-        ],
-      },
-      cart: {
-        products: [
-          {
-            productId: 0,
-            quantity: 2,
-          },
-        ],
-        taxes: [
-          {
-            name: 20,
-            value: 4,
-          },
-        ],
-        totalAmountIncludingTaxes: 24,
-      },
+      data: products,
+      cart: localCart
     }
+  }
+
+  componentDidMount() {
+    const cartJson = localStorage.getItem('cart');
+    const cart = cartJson !== null ? JSON.parse(cartJson) : this.state.cart;
+
+    this.setState({cart})
+  }
+
+  componentDidUpdate() {
+    const { cart } = this.state
+    localStorage.setItem('cart', JSON.stringify(cart))
   }
 
   updateCartPrice = (product: Product, qty: number) => {
@@ -250,8 +219,8 @@ export default class App extends Component<Props, State> {
   }
 
   renderItem = (item: Product) => {
-    const { id, name, description } = item
-    const media = <Avatar customer={true} size="large" name={name} />;
+    const { id, name, description, img_url } = item
+    const media = <Avatar customer={true} size="large" name={name} source={img_url} />;
     const shortcutActions = [
       {
         content: `Add`,
@@ -262,8 +231,9 @@ export default class App extends Component<Props, State> {
       {
         content: `Remove`,
         onAction: () => {
-          this.removeFromCart(item, -1);
-          // gérer le cas ou il n'y a rien dans le panier.
+          let isRemovable = this.state.cart.products.find(product => product.productId === item.id) == undefined ? false : true;
+          // Cas où il n'y a rien dans le panier.
+          if (isRemovable) this.removeFromCart(item, -1);
         }
       },
     ]
@@ -277,7 +247,6 @@ export default class App extends Component<Props, State> {
         persistActions={true}
         onClick={ () => {
           // console.log(item)
-          this.handleChange
         }}
       >
         <h3>
@@ -291,7 +260,6 @@ export default class App extends Component<Props, State> {
   render() {
     const { data, cart } = this.state
     
-    /* Cart */
     const cancelCartAction =       {
       content: 'Cancel cart',
       onAction: () => this.cancelCart()
@@ -321,36 +289,21 @@ export default class App extends Component<Props, State> {
               primaryFooterAction={checkoutCartAction}
             >
               <Card.Section title="Items">
-                <Coucou></Coucou>
                 <List>
                   {cart.products.map(productCart => {
                     const product = data.products.find(product => product.id === productCart.productId)
                     if(product && product.price) {
-                      return <List.Item key={product.id}>{product.name} : {productCart.quantity} × {product.price}€ <Button plain destructive onClick={ () => {this.removeFromCart(product, -1);}} >Remove</Button> </List.Item>
+                      return <List.Item key={product.id}>{product.name} :<br/> {productCart.quantity} × {product.price}€ <Button plain destructive onClick={ () => {this.removeFromCart(product, -1);}} >Remove</Button> </List.Item>
                     }
                   })}
                 </List>
               </Card.Section>
               <Card.Section title="Totals">
                 <List>
-                  {
-                  // Object.values(cart.taxes.reduce((prev: {[key: number]: [number, number]}, tax) => {
-
-                  //     if(prev.hasOwnProperty(tax.name)) {
-                  //       prev[tax.name] = [tax.name, prev[tax.name][1] + this.formatNumber(tax.value)]
-                  //     } else {
-                  //       prev[tax.name] = [tax.name, this.formatNumber(tax.value)]
-                  //     }
-
-                  //     return prev;
-                  //     // /** TODO: Utilisation des props pour update le composant */
-                  //   }, {} as {[key: number]: [number, number]})).map(([taxName, taxValue]: [number, number]) => <List.Item key={taxName}>TVA {taxName}% : {this.formatNumber(taxValue)}€</List.Item>)
-                    
-                    cart.taxes.map(tax => {
+                  {cart.taxes.map(tax => {
                       if(tax && tax.value) {
                         return <List.Item key={tax.name}>TVA {tax.name}% : {this.formatNumber(tax.value)}€</List.Item>
                       }
-                      console.log(cart.taxes);
                     })
                     }
                   <List.Item>

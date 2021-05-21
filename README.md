@@ -41,11 +41,11 @@ La page se mettra à jour si vous faites une modification du code. Vous verrez �
 L'objectif de ce test est de recréer un système de panier comme l'on trouve sur de nombreux sites e-commerce. Vous trouverez en ouvrant le fichier `src/App.tsx` l'ossature de l'application avec un set de données présent et quelques balises `html` pour structurer la page.
 
 Rien n'a encore été dynamisé dans l'interface, vous aurez donc l'objectif de :
-* [ ] permettre l'ajout d'un produit au panier
-* [ ] permettre la suppression d'un produit présent dans le panier
-* [ ] calculer automatiquement le montant total du panier ainsi que les différentes TVA
+* [x] permettre l'ajout d'un produit au panier
+* [x] permettre la suppression d'un produit présent dans le panier
+* [x] calculer automatiquement le montant total du panier ainsi que les différentes TVA
 * [ ] [ajouter un système de recherche dans les produits du catalogue](https://polaris.shopify.com/components/lists-and-tables/resource-list#all-examples)
-* [ ] [et ajouter des fonctionnalités en plus de votre choix](#user-content-les-plus) (optionnel)
+* [x] [et ajouter des fonctionnalités en plus de votre choix](#user-content-les-plus) (optionnel)
 * [ ] refactorer le code pour utiliser les hooks (optionnel)
 
 ## Documentation
@@ -78,10 +78,10 @@ $ 0.1+0.2
 ## Les plus
 
 Une fois avoir répondu avec soin aux objectifs de base de l'exercice, vous pourrez effectuer quelques améliorations supplémentaires, quelques idées :
-* Gérer un système de devises (€, $ ...) 💰
-* Transformer le code en [`ReScript`](http://rescript-lang.org) pour avoir une codebase plus secure
-* Ajouter un système de remise 💳
-* Créer un système de cache pour que les paniers ne soient pas perdus même après rafraichissement de la page 💾
-* Relier l'application à une API externe qui retourne des produits au format JSON 🌍
-* Ajouter un système de paiement 💸
+* [] Gérer un système de devises (€, $ ...) 💰
+* [] Transformer le code en [`ReScript`](http://rescript-lang.org) pour avoir une codebase plus secure
+* [] Ajouter un système de remise 💳
+* [x] Créer un système de cache pour que les paniers ne soient pas perdus même après rafraichissement de la page 💾
+* [] Relier l'application à une API externe qui retourne des produits au format JSON 🌍
+* [] Ajouter un système de paiement 💸
 * ...

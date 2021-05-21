@@ -1,0 +1,43 @@
+export const products = {
+    products: [{
+        id: 0,
+        name: 'Romain Duvernay, 2014 - Cornas AOP - Rouge - 75 cl',
+        description: 'Bouche charnue alliée à une réelle fraîcheur confèrent une sensation harmonieuse.',
+        img_url:'https://e-leclerc.scene7.com/is/image/gtinternet/3760256772423_1?op_sharpen=1&resmode=bilin&fmt=pjpeg&fit=fit,1&wid=450&hei=450',
+        price: 26.95,
+        tax: 20,
+    },
+    {
+        id: 1,
+        name: 'Château Latour à Pomerol, 2015 - Pomerol AOP - Rouge - 75 cl',
+        description: 'Le vin est léger et persistant, tout en élégance, les tannins sont fins, pas la chair habituelle, un peu asséchant.',
+        img_url:'https://e-leclerc.scene7.com/is/image/gtinternet/3328155001930_1?op_sharpen=1&resmode=bilin&fmt=pjpeg&fit=fit,1&wid=450&hei=450',
+        price: 82,
+        tax: 5.5,
+    },
+    {
+        id: 2,
+        name: 'Château Lafite Rothschild, 2017 - Pauillac AOP - Rouge - 75 cl',
+        description: 'En bouche l’attaque est douce et soyeuse. Le milieu de bouche est parfaitement harmonieux. Le vin présente une très belle persistance en bouche.',
+        img_url:'https://e-leclerc.scene7.com/is/image/gtinternet/3296331017108_1?op_sharpen=1&resmode=bilin&fmt=pjpeg&fit=fit,1&wid=450&hei=450',
+        price: 616,
+        tax: 5.5,
+    },
+    {
+        id: 3,
+        name: 'SAINT-NECTAIRE - fermier',
+        description: `Découvrez un Saint-Nectaire des plus onctueux... Le bon goût de l'Auvergne !`,
+        img_url:'https://www.tentationfromage.fr/pub/media/catalog/product/cache/c687aa7517cf01e65c009f6943c2b1e9/f/r/fromage-saint-nectaire_1.jpg',
+        price: 4.5,
+        tax: 10,
+    },
+    {
+        id: 4,
+        name: 'Product A',
+        description: 'Lorem ipsum dolor sit, amet consectetur',
+        img_url:'',
+        price: 12,
+        tax: 20,
+      },
+    ],
+}
