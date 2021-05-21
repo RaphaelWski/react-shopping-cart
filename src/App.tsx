@@ -66,6 +66,13 @@ export default class App extends Component<Props, State> {
             price: 10,
             tax: 5.5,
           },
+          {
+            id: 3,
+            name: 'Product D',
+            description: 'Lorem ipsum dolor sit, amet consectetur',
+            price: 12,
+            tax: 10,
+          },
         ],
       },
       cart: {
@@ -88,22 +95,17 @@ export default class App extends Component<Props, State> {
 
   updateCartPrice = (product: Product, qty: number) => {
     let { cart } = this.state
-    let valueHT = product.price / (1 + (product.tax / 100)); // [Montant HT] = [Montant TTC] / (1 + ([Taux TVA] / 100))
+    // [Montant HT] = [Montant TTC] / (1 + ([Taux TVA] / 100))
+    let valueHT = product.price / (1 + (product.tax / 100));
     let value = product.price - valueHT;
     let tax: {name: number, value: number};
     
     const taxValue = cart.taxes.find(tax => tax.name == product.tax);
-    // si taxValue et qty > 0 on ajoute un produit au panier donc on update
-    // sinon si taxValue qty < 0 on verifie si on enleve le produit au panier (tax vide {})
+
     if(taxValue) {
       tax = { name: product.tax, value: taxValue.value + (qty * this.formatNumber(value)) };
     } else {
-      // S'il reste une taxe du meme type mais que le calcul est <= 0, on enleve la tax
-      // if((qty * this.formatNumber(value)) <= 0) {
-      //   tax = {}
-      // } else {
-        tax = { name: product.tax, value: (qty * this.formatNumber(value)) };
-      // }
+      tax = { name: product.tax, value: (qty * this.formatNumber(value)) };
     }
     
     return tax;
@@ -130,13 +132,10 @@ export default class App extends Component<Props, State> {
     if(product && product.quantity) {
       cartProduct = { productId: item.id, quantity: product.quantity + qty }
 
-      // si la taxe est deja existante, on additionne
-      // sinon on la créee
       let tax = this.updateCartPrice(item, qty);
       let totalAmountIncludingTaxes = this.updateTotalAmount(item, qty);
-
+      
       cart = {
-        // ...cart,
         products: [
           ...cart.products.filter(product => product.productId !== item.id), // Attention à l'ordre
           cartProduct
@@ -154,19 +153,17 @@ export default class App extends Component<Props, State> {
       let totalAmountIncludingTaxes = this.updateTotalAmount(item, qty);
 
       cart = {
-        // ...cart,
         products: [
           ...cart.products.filter(product => product.productId !== item.id), // Attention à l'ordre
           cartProduct
         ],
         taxes: [
-          ...cart.taxes,
+          ...cart.taxes.filter(tax => tax.name !== item.tax),
           tax
         ],
         totalAmountIncludingTaxes: totalAmountIncludingTaxes
       }
     }
-    // console.log(cart);
     
     this.setState({ cart })
   }
@@ -179,16 +176,10 @@ export default class App extends Component<Props, State> {
 
     if(product && product.quantity) {
       if(product.quantity == 1) {
-        // vérifier s'il y a deja ce type de tax
-        // if() {
 
-        // }
-        let tax = this.updateCartPrice(item, qty); // si c'est le dernier taxName GESTION DeS TAXNAME
+        let tax = this.updateCartPrice(item, qty);
         let totalAmountIncludingTaxes = this.updateTotalAmount(item, qty);
-        // let lastTaxType = cart.taxes.name
-        // si tax <= 0 et que c'est la derniere de son type, on enleve cette tax
         if(tax.value <= 0) {
-          console.log(`ON EST DANS  tax.value <= 0: ${tax.value}`);
           cart = {
             products: [
               ...cart.products.filter(product => product.productId !== item.id)  // Attention à l'ordre
@@ -229,7 +220,6 @@ export default class App extends Component<Props, State> {
         }
       }
     } 
-    // console.log(cart);
     this.setState({ cart })
   }
   
