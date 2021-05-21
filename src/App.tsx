@@ -49,29 +49,29 @@ export default class App extends Component<Props, State> {
       cart: localCart
     }
   }
-
   componentDidMount() {
     const cartJson = localStorage.getItem('cart');
-    const cart = cartJson !== null ? JSON.parse(cartJson) : this.state.cart;
+    const cart = cartJson !== null ? JSON.parse(cartJson) : this.state.cart; // Gestion du cache
 
     this.setState({cart})
   }
 
   componentDidUpdate() {
     const { cart } = this.state
-    localStorage.setItem('cart', JSON.stringify(cart))
+    localStorage.setItem('cart', JSON.stringify(cart)) // Ajout d'un item au localStorage pour avoir un système de cache.
   }
 
+  // Mise à jour du prix du panier
   updateCartPrice = (product: Product, qty: number) => {
     let { cart } = this.state
-    // [Montant HT] = [Montant TTC] / (1 + ([Taux TVA] / 100))
-    let valueHT = product.price / (1 + (product.tax / 100));
+    
+    let valueHT = product.price / (1 + (product.tax / 100)); // [Montant HT] = [Montant TTC] / (1 + ([Taux TVA] / 100))
     let value = product.price - valueHT;
     let tax: {name: number, value: number};
     
     const taxValue = cart.taxes.find(tax => tax.name == product.tax);
 
-    if(taxValue) {
+    if(taxValue) { // Si le taux existe déja dans notre panier
       tax = { name: product.tax, value: taxValue.value + (qty * this.formatNumber(value)) };
     } else {
       tax = { name: product.tax, value: (qty * this.formatNumber(value)) };
@@ -80,10 +80,12 @@ export default class App extends Component<Props, State> {
     return tax;
   }
 
+  // Gestion des décimales
   formatNumber(number: Number) {
     return parseFloat(Number.parseFloat(number.toString()).toFixed(2));
   }
 
+  // Mise à jour du prix TTC
   updateTotalAmount(item: Product, qty: number) {
     let { cart } = this.state;
 
@@ -92,46 +94,38 @@ export default class App extends Component<Props, State> {
     return total
   }
 
+  // Gestion de l'ajout d'un produit au panier avec sa quantité (en prévision d'un bouton +/-)
   addToCart = (item: Product, qty: number) => {
     let { cart } = this.state
     let cartProduct : CartProduct;
+    let tax, totalAmountIncludingTaxes;
 
     const product = cart.products.find(product => product.productId === item.id)
 
+    // Si le produit a ajouter existe déja dans le panier
     if(product && product.quantity) {
       cartProduct = { productId: item.id, quantity: product.quantity + qty }
 
-      let tax = this.updateCartPrice(item, qty);
-      let totalAmountIncludingTaxes = this.updateTotalAmount(item, qty);
-      
-      cart = {
-        products: [
-          ...cart.products.filter(product => product.productId !== item.id), // Attention à l'ordre
-          cartProduct
-        ],
-        taxes: [
-          ...cart.taxes.filter(tax => tax.name !== item.tax),
-          tax
-        ],
-        totalAmountIncludingTaxes: totalAmountIncludingTaxes
-      }
+      tax = this.updateCartPrice(item, qty);
+      totalAmountIncludingTaxes = this.updateTotalAmount(item, qty);
     } else {
       cartProduct = { productId: item.id, quantity: 1 }
 
-      let tax = this.updateCartPrice(item, qty);
-      let totalAmountIncludingTaxes = this.updateTotalAmount(item, qty);
+      tax = this.updateCartPrice(item, qty);
+      totalAmountIncludingTaxes = this.updateTotalAmount(item, qty);
+    }
 
-      cart = {
-        products: [
-          ...cart.products.filter(product => product.productId !== item.id), // Attention à l'ordre
-          cartProduct
-        ],
-        taxes: [
-          ...cart.taxes.filter(tax => tax.name !== item.tax),
-          tax
-        ],
-        totalAmountIncludingTaxes: totalAmountIncludingTaxes
-      }
+    // Ajout du produit et MàJ des taxes et du total
+    cart = {
+      products: [
+        ...cart.products.filter(product => product.productId !== item.id), // TODO: Attention à l'ordre
+        cartProduct
+      ],
+      taxes: [
+        ...cart.taxes.filter(tax => tax.name !== item.tax),
+        tax
+      ],
+      totalAmountIncludingTaxes: totalAmountIncludingTaxes
     }
     
     this.setState({ cart })
@@ -192,6 +186,7 @@ export default class App extends Component<Props, State> {
     this.setState({ cart })
   }
   
+  // Vider le panier
   cancelCart = () => {
     let { cart } = this.state;
 
@@ -205,17 +200,9 @@ export default class App extends Component<Props, State> {
     this.setState({ cart });
   }
 
+  // Vérifier le panier pour aller au paiement
   checkoutCart = () => {
     console.log('Checkout Cart action');
-  }
-
-  handleChange = () => {
-    const [count, setCount]= useState(0);
-
-    useEffect(() => {
-      document.title = `Vous avez cliqué ${count} fois`;
-    });
-    //  this.setState(this.state);
   }
 
   renderItem = (item: Product) => {

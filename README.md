@@ -78,10 +78,10 @@ $ 0.1+0.2
 ## Les plus
 
 Une fois avoir répondu avec soin aux objectifs de base de l'exercice, vous pourrez effectuer quelques améliorations supplémentaires, quelques idées :
-* [] Gérer un système de devises (€, $ ...) 💰
-* [] Transformer le code en [`ReScript`](http://rescript-lang.org) pour avoir une codebase plus secure
-* [] Ajouter un système de remise 💳
+* [ ] Gérer un système de devises (€, $ ...) 💰
+* [ ] Transformer le code en [`ReScript`](http://rescript-lang.org) pour avoir une codebase plus secure
+* [ ] Ajouter un système de remise 💳
 * [x] Créer un système de cache pour que les paniers ne soient pas perdus même après rafraichissement de la page 💾
-* [] Relier l'application à une API externe qui retourne des produits au format JSON 🌍
-* [] Ajouter un système de paiement 💸
+* [ ] Relier l'application à une API externe qui retourne des produits au format JSON 🌍
+* [ ] Ajouter un système de paiement 💸
 * ...
